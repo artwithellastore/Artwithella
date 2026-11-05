@@ -1,0 +1,77 @@
+{
+  "_readme": "Single source of truth for the shop. The website reads this file and so do the server functions, so prices are always enforced on the server. Prices are US dollars. A print type is hidden from the shop until its subcategoryId (and every frame/finish choice's optionIds) are filled in. See SETUP.md, step 5.",
+
+  "shipping": {
+    "_note": "Flat-rate shipping charged at Stripe checkout. The most expensive product type in the cart sets the base; each extra item adds extraPerItem. Compare against what Lumaprints actually bills you.",
+    "countries": ["US"],
+    "base": { "paper": 6, "canvas": 12, "framed": 16 },
+    "extraPerItem": 3
+  },
+
+  "types": {
+    "paper": {
+      "label": "Art paper",
+      "blurb": "Fine art paper print, ready to frame",
+      "subcategoryId": 103001,
+      "orderItemOptions": [],
+      "sizes": [
+        { "w": 4,  "h": 6,  "price": 5 },
+        { "w": 5,  "h": 7,  "price": 7 },
+        { "w": 6,  "h": 6,  "price": 7 },
+        { "w": 8,  "h": 10, "price": 15 },
+        { "w": 8,  "h": 12, "price": 17 },
+        { "w": 11, "h": 14, "price": 25 },
+        { "w": 16, "h": 20, "price": 40 }
+      ],
+      "variant": null
+    },
+    "canvas": {
+      "label": "Canvas",
+      "blurb": "Gallery-wrapped stretched canvas, ready to hang",
+      "subcategoryId": 101001,
+      "orderItemOptions": [],
+      "sizes": [
+        { "w": 8,  "h": 10, "price": 55 },
+        { "w": 11, "h": 14, "price": 75 },
+        { "w": 16, "h": 20, "price": 110 },
+        { "w": 24, "h": 30, "price": 180 }
+      ],
+      "variant": null
+    },
+    "framed": {
+      "label": "Framed print",
+      "blurb": "Fine art print in a solid wood frame, ready to hang",
+      "subcategoryId": null,
+      "orderItemOptions": [],
+      "sizes": [
+        { "w": 8,  "h": 10, "price": 65 },
+        { "w": 11, "h": 14, "price": 85 },
+        { "w": 16, "h": 20, "price": 130 }
+      ],
+      "variant": {
+        "label": "Frame",
+        "choices": [
+          { "key": "black", "label": "Black", "optionIds": null },
+          { "key": "white", "label": "White", "optionIds": null },
+          { "key": "natural", "label": "Natural wood", "optionIds": null }
+        ]
+      }
+    }
+  },
+
+  "pieces": [
+    { "id": "kairos-sunset",  "t": "Kairos Sunset",              "m": "Painting", "img": "kairos",  "land": false, "a": "Three friends watching a glowing orange sunset over the water" },
+    { "id": "little-eyes",    "t": "Little Eyes, Big Ocean",     "m": "Painting", "img": "ocean",   "land": false, "a": "Two children at an aquarium window with turtles, dolphins and coral" },
+    { "id": "world-outside",  "t": "A World Outside the Window", "m": "Painting", "img": "window",  "land": true,  "a": "A toddler in orange pajamas looking out a window between purple curtains" },
+    { "id": "tea-time",       "t": "Tea Time",                   "m": "Painting", "img": "tea",     "land": false, "a": "A stack of three teacups in pink, blue and cream" },
+    { "id": "hazel",          "t": "Hazel",                      "m": "Drawing",  "img": "hazel",   "land": false, "a": "Portrait of a scruffy black and tan dog on kraft paper" },
+    { "id": "sunset-florals", "t": "Sunset Over Florals",        "m": "Painting", "img": "florals", "land": false, "a": "A sunset over a field of pink flowers" },
+    { "id": "italian-streets","t": "Italian Streets",            "m": "Painting", "img": "italy",   "land": true,  "a": "A courtyard with blue shutters and a rose-covered trellis" },
+    { "id": "trickling-waters","t": "Trickling Waters",          "m": "Painting", "img": "water",   "land": true,  "a": "A tiered fountain beside pink and purple flower beds" },
+    { "id": "petals-folds",   "t": "Petals and Folds",           "m": "Drawing",  "img": "petals",  "land": false, "a": "Pencil drawing of lilies in a cut-glass vase against draped fabric" },
+    { "id": "ladybug",        "t": "Ladybug",                    "m": "Drawing",  "img": "ladybug", "land": false, "a": "Pencil drawing of a hand with a red ladybug on one finger" },
+    { "id": "carl-smith-way", "t": "Carl Smith Way",             "m": "Painting", "img": "carl",    "land": true,  "a": "A bus and lamppost in autumn at the Carl Smith Center" },
+    { "id": "homer",          "t": "Homer",                      "m": "Painting", "img": "homer",   "land": false, "a": "A colorful painting of a statue with a lyre" },
+    { "id": "snow-branches",  "t": "Snow-Covered Branches",      "m": "Painting", "img": "snow",    "land": false, "a": "A snow-covered evergreen tree at dusk" }
+  ]
+}

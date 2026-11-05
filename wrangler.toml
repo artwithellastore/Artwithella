@@ -1,0 +1,9 @@
+name = "art-with-ella"
+compatibility_date = "2025-01-01"
+pages_build_output_dir = "."
+
+# Private bucket holding the full-resolution print files, named <piece id>.jpg
+# (e.g. kairos-sunset.jpg). Create it in Cloudflare dashboard > R2, then uncomment:
+# [[r2_buckets]]
+# binding = "PRINTS"
+# bucket_name = "art-with-ella-prints"

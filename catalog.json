@@ -2,7 +2,7 @@
   "_readme": "Single source of truth for the shop. The website reads this file and so do the server functions, so prices are always enforced on the server. Prices are US dollars. A print type is hidden from the shop until its subcategoryId (and every frame/finish choice's optionIds) are filled in. See SETUP.md, step 5.",
   "formService": {
     "_readme": "Email sending. Leave web3formsKey empty to use FormSubmit. To use Web3Forms instead, get a free access key at web3forms.com and paste it between the quotes.",
-    "web3formsKey": ""
+    "web3formsKey": "4a411acb-7477-4f0c-90ce-14955b8ba62e"
   },
   "shipping": {
     "_note": "Flat-rate shipping charged at Stripe checkout. The most expensive product type in the cart sets the base; each extra item adds extraPerItem. Compare against what Lumaprints actually bills you.",

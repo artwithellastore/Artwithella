@@ -30,7 +30,7 @@ export async function onRequestPost({ request, env }) {
 export async function fulfil(env, session, origin) {
   const piId = session.payment_intent;
   const pi = await stripe(env, "GET", "/payment_intents/" + piId);
-  if (pi.metadata && pi.metadata.luma_order) return "Already sent to Lumaprints"; // duplicate delivery
+  if (pi.metadata && (pi.metadata.luma_order || pi.metadata.fulfilment === "manual-logged")) return "Already handled"; // duplicate delivery
 
   const cart = resolveCart(decodeCart(session.metadata));
   if (cart.error) throw new Error("Cart could not be rebuilt: " + cart.error);
@@ -38,6 +38,25 @@ export async function fulfil(env, session, origin) {
   const shipping = (session.collected_information && session.collected_information.shipping_details) || session.shipping_details;
   if (!shipping || !shipping.address) throw new Error("No shipping address on the session");
   const phone = session.customer_details && session.customer_details.phone;
+
+  // MANUAL MODE: used when Lumaprints isn't connected yet (or MANUAL_ORDERS=true).
+  // Nothing is sent to print. The order is written onto the Stripe payment in plain English
+  // (description + shipping address) so you can review it in Stripe > Payments and place it yourself.
+  const manual = env.MANUAL_ORDERS === "true" || !env.LUMA_API_KEY || !env.LUMA_API_SECRET || !env.LUMA_STORE_ID;
+  if (manual) {
+    const summary = cart.items.map((it) => `${it.qty} x ${itemName(it)} [file ${it.piece.id}.jpg]`).join("; ");
+    const a = shipping.address;
+    await stripe(env, "POST", "/payment_intents/" + piId, {
+      description: ("Art With Ella order: " + summary).slice(0, 900),
+      shipping: {
+        name: shipping.name,
+        phone: phone || undefined,
+        address: { line1: a.line1, line2: a.line2 || undefined, city: a.city, state: a.state, postal_code: a.postal_code, country: a.country },
+      },
+      metadata: { fulfilment: "manual-logged" },
+    });
+    return "Manual mode: order recorded on the Stripe payment, not sent to Lumaprints";
+  }
 
   const externalId = "AWE-" + session.id.slice(-12);
   const order = await buildOrder(env, origin, { externalId, items: cart.items, ship: shipping, phone });

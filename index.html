@@ -367,23 +367,19 @@ orderForm.addEventListener("submit",function(e){
   var lines=cart.map(function(it){var l=sizeOf(CAT.types[it.type],it.size).price*it.qty;total+=l;return itemLabel(it)+" ($"+l+")";});
   var fields={order:lines.join("; "),"print total":"$"+total+" plus shipping",name:f.get("name"),email:f.get("email"),"ship to":f.get("address"),notes:f.get("notes")};
   var title="Print order from "+f.get("name");
-  var payload=Object.assign({_subject:title,_replyto:f.get("email"),_template:"table",_captcha:"false",_honey:f.get("_honey"),
-    _autoresponse:THANKS.orderForm.auto},fields);
-  var stop=new AbortController(),timer=setTimeout(function(){stop.abort();},20000),email=f.get("email");
+  var email=f.get("email");
   payBtn.disabled=true;payBtn.textContent="Sending…";orderNote.textContent="";
-  fetch("https://formsubmit.co/ajax/"+FORM_ID,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(payload),signal:stop.signal})
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(String(d.success)!=="true"){throw new Error(d.message||"Not sent");}
+  postForm(title,fields,f.get("_honey"))
+    .then(function(){
       cart=[];saveCart();orderForm.reset();fillOrderOptions();renderCart();
       showThanks(THANKS.orderForm.lead,lines.concat(["Print total: "+money(total)+" plus shipping","I’ll reply to "+email+"."]),THANKS.orderForm.steps);
     })
-    .catch(function(){backupOptions(orderNote,title,fields);})
-    .finally(function(){clearTimeout(timer);payBtn.disabled=false;payBtn.textContent=payLabel;});
+    .catch(function(err){backupOptions(orderNote,title,fields,err&&err.message);})
+    .finally(function(){payBtn.disabled=false;payBtn.textContent=payLabel;});
 });
 
 fetch("catalog.json").then(function(r){if(!r.ok){throw new Error("catalog");}return r.json();}).then(function(c){
-  CAT=c;PIECES=c.pieces;
+  CAT=c;PIECES=c.pieces;W3KEY=(c.formService&&c.formService.web3formsKey)||"";
   PIECES.forEach(buildCard);
   PIECES.forEach(function(pc){oPiece.add(new Option(pc.t,pc.id));});
   var tk=typeKeys();
@@ -404,10 +400,26 @@ function copyText(text){
   document.body.appendChild(t);t.select();var ok=document.execCommand("copy");t.remove();
   return ok?Promise.resolve():Promise.reject();
 }
-function backupOptions(el, title, fields){
+var W3KEY="";  // filled from catalog.json ("formService" > "web3formsKey")
+function postForm(title,fields,honey){
+  if(honey){return Promise.resolve();} // a bot filled the hidden field: pretend it worked, send nothing
+  var url,body,stop=new AbortController(),timer=setTimeout(function(){stop.abort();},20000);
+  if(W3KEY){
+    url="https://api.web3forms.com/submit";
+    body=Object.assign({access_key:W3KEY,subject:title,from_name:fields.name},fields);
+  }else{
+    url="https://formsubmit.co/ajax/"+FORM_ID;
+    body=Object.assign({_subject:title,_replyto:fields.email,_template:"table",_captcha:"false"},fields);
+  }
+  return fetch(url,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(body),signal:stop.signal})
+    .then(function(r){return r.json().catch(function(){return {success:false,message:"Unexpected reply ("+r.status+")"};});})
+    .then(function(d){if(String(d.success)!=="true"){throw new Error(d.message||"Not sent");}})
+    .finally(function(){clearTimeout(timer);});
+}
+function backupOptions(el, title, fields, reason){
   var body=labelled(fields),box=document.createElement("span");
   box.className="fb";
-  el.textContent="This didn’t go through, so nothing has been sent yet. Your details are still here. You can email them to "+EMAIL+" instead:";
+  el.textContent="This didn’t go through"+(reason?" ("+reason+")":"")+", so nothing has been sent yet. Your details are still here. You can email them to "+EMAIL+" instead:";
   function link(text,href,newTab){
     var a=document.createElement("a");a.className="btn ghost";a.textContent=text;a.href=href;
     if(newTab){a.target="_blank";a.rel="noopener";}
@@ -429,19 +441,15 @@ function send(form, note, subject, done, build){
     e.preventDefault();
     if(btn.disabled){return;}
     var f=new FormData(form),fields=build(f),title=subject+" from "+f.get("name");
-    var payload=Object.assign({_subject:title,_replyto:f.get("email"),_template:"table",_captcha:"false",_honey:f.get("_honey"),_autoresponse:THANKS[form.id].auto},fields);
-    var stop=new AbortController(),timer=setTimeout(function(){stop.abort();},20000);
     btn.disabled=true;btn.textContent="Sending…";noteEl.textContent="";
-    fetch("https://formsubmit.co/ajax/"+FORM_ID,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(payload),signal:stop.signal})
-      .then(function(r){return r.json();})
-      .then(function(d){
-        if(String(d.success)!=="true"){throw new Error(d.message||"Not sent");}
+    postForm(title,fields,f.get("_honey"))
+      .then(function(){
         var shown=Object.keys(fields).filter(function(k){return k!=="email"&&fields[k];}).map(function(k){return k.charAt(0).toUpperCase()+k.slice(1)+": "+fields[k];});
         form.reset();
         showThanks(THANKS[form.id].lead,form.id==="contactForm"?[]:shown,THANKS[form.id].steps);
       })
-      .catch(function(){backupOptions(noteEl,title,fields);})
-      .finally(function(){clearTimeout(timer);btn.disabled=false;btn.textContent=label;});
+      .catch(function(err){backupOptions(noteEl,title,fields,err&&err.message);})
+      .finally(function(){btn.disabled=false;btn.textContent=label;});
   });
 }
 send(document.getElementById("commForm"), "commNote", "Commission request", "Thank you! Your request was sent. I’ll reply by email with a quote and a timeline.", function(f){
